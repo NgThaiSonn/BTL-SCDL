@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102d2b"><title>Sổ chi nhánh · Quản lý ngân hàng</title>
+  <link rel="stylesheet" href="/static/style.css"><script defer src="/static/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#content">Đến nội dung</a>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">▥</span><span>Sổ chi nhánh<small>Quản lý ngân hàng</small></span></div>
+    <nav aria-label="Chức năng" id="nav"></nav>
+    <div class="sidebar-foot">PTIT <span>·</span> Cơ sở dữ liệu</div>
+  </aside>
+  <main id="content" tabindex="-1">
+    <header class="top"><span>Chi nhánh <b>/</b> <strong id="crumb">Tổng quan</strong></span><time id="today"></time></header>
+    <div id="notice" role="status" aria-live="polite"></div>
+    <section id="page" aria-busy="true"><p>Đang tải dữ liệu chi nhánh…</p></section>
+  </main>
+  <dialog id="dialog"><div class="dialog-head"><h2 id="dialog-title"></h2><button id="close-dialog" type="button" aria-label="Đóng">×</button></div><div id="dialog-body"></div></dialog>
+</body>
+</html>
