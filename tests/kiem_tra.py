@@ -1,4 +1,3 @@
-"""Kiểm tra qua các API mà giao diện sử dụng, trên bản sao riêng của CSDL."""
 import os
 import sys
 import uuid

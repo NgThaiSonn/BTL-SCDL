@@ -1,4 +1,3 @@
-"""Giao diện nghiệp vụ cho CSDL chi nhánh MySQL."""
 import os
 import re
 import uuid

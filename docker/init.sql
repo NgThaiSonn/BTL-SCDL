@@ -1,4 +1,3 @@
--- Khởi tạo MySQL cho ứng dụng quản lý chi nhánh ngân hàng.
 CREATE DATABASE IF NOT EXISTS ptit_chi_nhanh CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE ptit_chi_nhanh;
 SET NAMES utf8mb4;
@@ -17,8 +16,6 @@ CREATE TABLE khach_hang (
     ho_ten VARCHAR(100) NOT NULL, ngay_sinh DATE NOT NULL, dia_chi VARCHAR(200) NOT NULL
 ) ENGINE=InnoDB;
 
--- Ánh xạ hai lớp con EER vào một bảng. Mỗi vị trí (suat) chỉ cấp một lần
--- cho mỗi chủ sở hữu và loại TK. Khóa UNIQUE duy trì trần 2/3 ngay cả khi ghi đồng thời.
 CREATE TABLE tai_khoan (
     so_tk VARCHAR(20) PRIMARY KEY,
     ma_kh VARCHAR(12) NOT NULL, nv_mo VARCHAR(12) NOT NULL, ngay_mo DATETIME NOT NULL,
@@ -91,8 +88,6 @@ BEGIN
     COMMIT;
 END$$
 
--- NAP: nộp vào TK gửi. CHI: sử dụng tín dụng. TRA: thanh toán dư nợ bằng TK gửi.
--- Khóa nguồn gửi rồi khóa đích tín dụng theo cùng thứ tự ở mọi giao dịch.
 CREATE PROCEDURE sp_giao_dich(IN p_ma CHAR(36), IN p_loai VARCHAR(3),
     IN p_gui VARCHAR(20), IN p_td VARCHAR(20), IN p_tien DECIMAL(16,0),
     IN p_nv VARCHAR(12), IN p_luc DATETIME)
@@ -143,7 +138,6 @@ body: BEGIN
     COMMIT;
 END$$
 
--- Yêu cầu 1. Bao gồm nhân viên kinh doanh không mở tài khoản trong tháng.
 CREATE PROCEDURE sp_luong(IN p_thang DATE)
 BEGIN
     DECLARE v_dau DATE;
@@ -156,7 +150,6 @@ BEGIN
     WHERE n.vi_tri='KINH_DOANH' GROUP BY n.ma_nv,n.ho_ten ORDER BY luong DESC,n.ma_nv;
 END$$
 
--- Yêu cầu 2. Phân biệt người thực hiện và chủ TK tín dụng khi trả nợ hộ.
 CREATE PROCEDURE sp_tin_dung_trong_ky(IN p_tu DATE, IN p_den DATE)
 BEGIN
     IF p_tu IS NULL OR p_den IS NULL OR p_tu>p_den THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Khoảng ngày không hợp lệ.'; END IF;
@@ -170,7 +163,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- Yêu cầu 3 và 4. Truy vấn ở cuối tệp quy định thứ tự và số dòng trả về.
 CREATE VIEW v_du_no AS
 SELECT t.so_tk,k.ma_kh,k.ho_ten,t.han_muc,t.so_du kha_dung,t.han_muc-t.so_du du_no
 FROM tai_khoan t JOIN khach_hang k ON t.ma_kh=k.ma_kh WHERE t.loai='TD';
@@ -198,7 +190,6 @@ INSERT INTO khach_hang VALUES
 ('KH11','920000000011','Phan Phúc','1996-05-06','Hưng Yên'),
 ('KH12','920000000012','Đặng Trang','1999-08-29','Hà Nội');
 
--- Hai tháng để thử lọc kỳ. Toàn bộ dữ liệu dùng thủ tục giống ứng dụng.
 SET @nay=CAST(DATE_FORMAT(CURRENT_DATE,'%Y-%m-01') AS DATE);
 SET @truoc=DATE_SUB(@nay,INTERVAL 1 MONTH);
 CALL sp_mo_tai_khoan('G101','KH01','NV01','GUI',@truoc,20000000,100000,0.45,NULL);
@@ -224,6 +215,5 @@ CALL sp_giao_dich('DEMO-02','CHI',NULL,'T202',6000000,NULL,DATE_ADD(@truoc,INTER
 CALL sp_giao_dich('DEMO-03','CHI',NULL,'T203',8000000,'NV04',DATE_ADD(@truoc,INTERVAL 9 DAY));
 CALL sp_giao_dich('DEMO-04','NAP','G104',NULL,500000,'NV03',DATE_ADD(@truoc,INTERVAL 12 DAY));
 CALL sp_giao_dich('DEMO-05','TRA','G101','T201',1000000,'NV03',@nay);
--- Yêu cầu 5: Nguyễn An (G101) thanh toán hộ Trần Bình (T202).
 CALL sp_giao_dich('DEMO-06','TRA','G101','T202',1500000,'NV04',@nay);
 CALL sp_giao_dich('DEMO-07','CHI',NULL,'T204',1200000,'NV03',@nay);

@@ -2,8 +2,6 @@
 .venv
 __pycache__
 .env
-bao_cao
-Bai-nop
-chi_nhanh.sql
+BTL SCDL
 tests
 *.zip
