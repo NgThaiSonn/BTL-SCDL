@@ -501,6 +501,17 @@ dialog::backdrop {
   background:#102e2b77;
 }
 
+.receipt {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:10px 20px;
+  border-top:1px solid var(--line);
+  padding-top:16px;
+}
+
+.receipt dt { color:var(--sub); }
+.receipt dd { margin:0; overflow-wrap:anywhere; }
+
 .dialog-head button {
   border:0;
   border-radius:50%;

@@ -43,6 +43,17 @@ def run():
     assert len(top)==10 and top[0]["ma_kh"]=="KH03" and int(next(r["tong_gui"] for r in top if r["ma_kh"]=="KH01"))==20500000
     log("Xếp dư nợ giảm dần và top 10 cộng đủ nhiều tài khoản gửi")
     assert call("reports/activity?from=2026-02-02&to=2026-02-01")[0]==422
+    receipt=ok("transactions/DEMO-06")
+    assert (receipt["nguoi_thuc_hien"],receipt["chu_tin_dung"],receipt["nhan_vien"])==("Nguyễn An","Trần Bình","Đỗ Thu Hà")
+    assert int(receipt["so_tien"])==1500000 and call("transactions/khong-ton-tai")[0]==404
+    assert ok("transactions/DEMO-02")["nhan_vien"] is None
+    support=ok("reports/support?month="+sample_month)
+    assert {r["ma_nv"]:(r["so_luot"],int(r["tong_gia_tri"])) for r in support}=={
+        "NV01":(0,0),"NV02":(0,0),"NV03":(2,2200000),"NV04":(1,1500000),"NV05":(0,0)},support
+    assert call("reports/support?month=2026-13")[0]==400
+    audit=ok("reports/reconciliation")
+    assert len(audit)==len(accounts) and all(int(r["chenh_lech"])==0 for r in audit)
+    log("Tra biên lai trả hộ, đếm giao dịch có hỗ trợ theo tháng và đối soát số dư ban đầu")
     prefix="Z"+uuid.uuid4().hex[:7]
     customer=prefix
     ok("customers",dict(ma_kh=customer,cmt=str(uuid.uuid4().int%10**12).zfill(12),ho_ten="Khách kiểm thử",ngay_sinh="1990-01-01",dia_chi="Hà Nội"))
@@ -82,6 +93,9 @@ def run():
     fails("transactions",transaction("CHI",0,target=target),"không hợp lệ")
     ok("transactions",transaction("CHI",2000,target=target))
     assert balances()[target]==0
+    audit={r["so_tk"]:r for r in ok("reports/reconciliation")}
+    for account, balance in balances().items():
+        assert int(audit[account]["theo_nhat_ky"])==balance and audit[account]["ket_qua"]=="Khớp"
     log("Từ chối trả thừa, tiền lẻ hoặc bằng 0; chấp nhận chi đúng hạn mức")
     print("Đã hoàn tất kiểm tra nghiệp vụ.")
 if __name__=="__main__":

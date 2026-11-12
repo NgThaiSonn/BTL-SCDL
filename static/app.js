@@ -113,7 +113,7 @@ function accounts(){
       const detail=info.loai==="GUI"?`Tiền gửi đầu ${money(info.tien_gui_dau)} ₫ · Tối thiểu ${money(info.du_toi_thieu)} ₫ · Lãi ${Number(info.lai_thang)}%/tháng`:
         `Hạn mức ${money(info.han_muc)} ₫ · Dư nợ ${money(BigInt(info.han_muc)-BigInt(info.so_du))} ₫`;
       modal("Sao kê "+code,`<p>${esc(info.ho_ten)} · Mở ngày ${fmtDay(info.ngay_mo)}</p><p class="help">${detail}</p>`+
-        table(s.rows,[["luc","Thời điểm","time"],["loai","Nghiệp vụ","tag"],["tk_gui","TK gửi"],["tk_td","TK tín dụng"],["so_tien","Số tiền (₫)","money"]]));
+        table(s.rows,[["ma_gd","Mã giao dịch","code"],["luc","Thời điểm","time"],["loai","Nghiệp vụ","tag"],["tk_gui","TK gửi"],["tk_td","TK tín dụng"],["so_tien","Số tiền (₫)","money"]]));
     }catch(err){notify(err.message,true);}
   };
 }
@@ -121,14 +121,31 @@ function employees(){
   page.innerHTML=header("Nhân viên chi nhánh")+`<div class="panel">${searchbar("Tìm nhân viên theo tên hoặc mã")}</div>`;
   searchable(state.employees,[["ma_nv","Mã NV","code"],["ho_ten","Họ và tên"],["vi_tri","Vị trí","tag"],["bac_nghe","Bậc nghề"],["tham_nien","Thâm niên (năm)"],["ngay_vao_lam","Ngày vào làm","date"],["cmt","CMT / CCCD"],["ngay_sinh","Ngày sinh","date"],["dia_chi","Địa chỉ"]],["ma_nv","ho_ten"]);
 }
+function lookupReceipt(){
+  modal("Tra biên lai",form(input("ma_gd","Mã giao dịch","text",'maxlength="36" placeholder="Ví dụ DEMO-06"'),"Tra cứu")+'<div id="receipt-result" aria-live="polite"></div>');
+  const result=$("#receipt-result");
+  bindForm($("#dialog form"),async data=>{
+    result.replaceChildren();
+    const r=await api("transactions/"+encodeURIComponent(data.ma_gd.trim()));
+    const details=[
+      ["Mã giao dịch",r.ma_gd],["Thời điểm",fmtTime(r.luc)],["Nghiệp vụ",labels[r.loai]],
+      ["Số tiền",money(r.so_tien)+" ₫"],["Người thực hiện",r.nguoi_thuc_hien],
+      ["Tài khoản gửi",r.tk_gui],["Tài khoản tín dụng",r.tk_td],["Chủ tài khoản tín dụng",r.chu_tin_dung],
+      ["Nhân viên hỗ trợ",r.nhan_vien ?? "Tự thực hiện"]
+    ];
+    result.innerHTML='<dl class="receipt">'+details.filter(([,v])=>v!=null)
+      .map(([label,value])=>`<dt>${esc(label)}</dt><dd>${esc(value)}</dd>`).join("")+'</dl>';
+  });
+}
 function transactions(){
   const needsGui=txnKind!=="CHI",needsTd=txnKind!=="NAP";
   const fields=(needsGui?select("tk_gui",txnKind==="TRA"?"Tài khoản gửi trích tiền":"Tài khoản nhận tiền nộp",accountOpts("GUI"),true):"")+
     (needsTd?select("tk_td","Tài khoản tín dụng",accountOpts("TD"),true):"")+
     input("so_tien","Số tiền (₫)","number",positive)+
     select("nv_ho_tro","Nhân viên hỗ trợ",'<option value="">Tự thực hiện</option>'+staffOpts(false)).replace(" required","");
-  page.innerHTML=header("Giao dịch")+`<div class="panel inline-form"><div class="tabs">${["TRA","CHI","NAP"].map(k=>`<button data-kind="${k}" class="${k===txnKind?"active":""}">${k==="TRA"?"Thanh toán dư nợ":k==="CHI"?"Chi tiêu tín dụng":"Nộp tiền gửi"}</button>`).join("")}</div>
+  page.innerHTML=header("Giao dịch","",button("lookup-receipt","Tra biên lai","secondary"))+`<div class="panel inline-form"><div class="tabs">${["TRA","CHI","NAP"].map(k=>`<button data-kind="${k}" class="${k===txnKind?"active":""}">${k==="TRA"?"Thanh toán dư nợ":k==="CHI"?"Chi tiêu tín dụng":"Nộp tiền gửi"}</button>`).join("")}</div>
     <div id="balance" class="help"></div>${form(fields,txnKind==="TRA"?"Xác nhận thanh toán":txnKind==="CHI"?"Ghi nhận chi tiêu":"Xác nhận nộp tiền")}</div>`;
+  $("#lookup-receipt").onclick=lookupReceipt;
   page.querySelectorAll("[data-kind]").forEach(b=>b.onclick=()=>{txnKind=b.dataset.kind;notify("");transactions();});
   const f=page.querySelector("form");
   function balance(){
@@ -151,7 +168,9 @@ const reportInfo={
   salary:["Lương kinh doanh",[["ma_nv","Mã NV","code"],["ho_ten","Nhân viên"],["so_td","TK tín dụng"],["so_gui","TK gửi"],["tong_gui_dau","Tổng gửi lần đầu (₫)","money"],["luong","Lương nghiệp vụ (₫)","money"]]],
   activity:["Giao dịch tín dụng",[["ho_ten","Người thực hiện"],["so_tk","TK tín dụng","code"],["chu_tk","Chủ TK tín dụng"],["so_luot","Số lượt"],["chi_tieu","Chi tiêu (₫)","money"],["thanh_toan","Thanh toán (₫)","money"],["tong_giao_dich","Tổng giao dịch (₫)","money"]]],
   debt:["Dư nợ",[["so_tk","TK tín dụng","code"],["ho_ten","Chủ tài khoản"],["han_muc","Hạn mức (₫)","money"],["kha_dung","Khả dụng (₫)","money"],["du_no","Dư nợ (₫)","money"]]],
-  top:["Top 10 tiền gửi",[["ma_kh","Mã KH","code"],["ho_ten","Khách hàng"],["so_tk_gui","Số TK gửi"],["tong_gui","Tổng tiền gửi (₫)","money"]]]
+  top:["Top 10 tiền gửi",[["ma_kh","Mã KH","code"],["ho_ten","Khách hàng"],["so_tk_gui","Số TK gửi"],["tong_gui","Tổng tiền gửi (₫)","money"]]],
+  support:["Giao dịch nhân viên hỗ trợ",[["ma_nv","Mã NV","code"],["ho_ten","Nhân viên"],["so_luot","Lượt hỗ trợ"],["tong_gia_tri","Giá trị đã hỗ trợ (₫)","money"]]],
+  reconciliation:["Đối soát số dư",[["so_tk","Số TK","code"],["loai","Loại tài khoản","tag"],["so_du","Số dư đang lưu (₫)","money"],["theo_nhat_ky","Tính từ nhật ký (₫)","money"],["chenh_lech","Chênh lệch (₫)","money"],["ket_qua","Kết quả"]]]
 };
 function exportReport(){
   if(!reportCache)return;
@@ -164,7 +183,7 @@ function exportReport(){
 async function reports(){
   const n=++reportSeq;reportCache=null;
   const name=report, cols=reportInfo[name][1];
-  const filter=name==="salary"?input("month","Tháng báo cáo","month",`value="${esc(period.month)}"`):
+  const filter=["salary","support"].includes(name)?input("month","Tháng báo cáo","month",`value="${esc(period.month)}"`):
     name==="activity"?input("from","Từ ngày","date",`value="${esc(period.from)}"`)+input("to","Đến ngày","date",`value="${esc(period.to)}"`):"";
   page.innerHTML=header("Báo cáo chi nhánh")+`<div class="tabs">${Object.entries(reportInfo).map(([key,v])=>`<button data-report="${key}" class="${key===name?"active":""}">${v[0]}</button>`).join("")}</div><article class="panel"><div class="sectionhead"><h2>${reportInfo[name][0]}</h2>${button("export","Xuất CSV","secondary")}</div>${filter?`<form class="filters">${filter}<button class="secondary" type="submit">Xem kết quả</button></form>`:""}<div id="results">Đang tra cứu…</div></article>`;
   $("#export").disabled=true;$("#export").onclick=exportReport;

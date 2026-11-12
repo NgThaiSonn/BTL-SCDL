@@ -191,6 +191,54 @@ def transact():
     return jsonify(message="Đã ghi nhận giao dịch.",ma_gd=key)
 
 
+@app.get("/api/transactions/<code>")
+def receipt(code):
+    rows = sql("""SELECT g.ma_gd, g.luc, g.loai, g.so_tien, g.tk_gui, g.tk_td,
+                         COALESCE(k_gui.ho_ten,k_td.ho_ten) nguoi_thuc_hien,
+                         k_td.ho_ten chu_tin_dung, n.ho_ten nhan_vien
+                  FROM giao_dich g
+                  LEFT JOIN tai_khoan gui ON gui.so_tk=g.tk_gui
+                  LEFT JOIN khach_hang k_gui ON k_gui.ma_kh=gui.ma_kh
+                  LEFT JOIN tai_khoan td ON td.so_tk=g.tk_td
+                  LEFT JOIN khach_hang k_td ON k_td.ma_kh=td.ma_kh
+                  LEFT JOIN nhan_vien n ON n.ma_nv=g.nv_ho_tro
+                  WHERE g.ma_gd=%s""", (code,))
+    if not rows:
+        return jsonify(error="Không tìm thấy biên lai có mã này."), 404
+    return jsonify(rows[0])
+
+
+@app.get("/api/reports/support")
+def staff_support():
+    first_day = calendar_day(request.args.get("month", "") + "-01")
+    return jsonify(sql("""SELECT n.ma_nv, n.ho_ten, COUNT(g.ma_gd) so_luot,
+                                 COALESCE(SUM(g.so_tien),0) tong_gia_tri
+                          FROM nhan_vien n LEFT JOIN giao_dich g
+                            ON g.nv_ho_tro=n.ma_nv AND g.luc >= %s
+                            AND g.luc < DATE_ADD(%s, INTERVAL 1 MONTH)
+                          GROUP BY n.ma_nv,n.ho_ten ORDER BY so_luot DESC,n.ma_nv""",
+                       (first_day, first_day)))
+
+
+@app.get("/api/reports/reconciliation")
+def reconcile_balances():
+    return jsonify(sql("""WITH but_toan AS (
+                            SELECT tk_gui so_tk, IF(loai='NAP',so_tien,-so_tien) bien_dong
+                            FROM giao_dich WHERE tk_gui IS NOT NULL
+                            UNION ALL
+                            SELECT tk_td so_tk, IF(loai='CHI',-so_tien,so_tien) bien_dong
+                            FROM giao_dich WHERE tk_td IS NOT NULL
+                          ), doi_chieu AS (
+                            SELECT t.so_tk, t.loai, t.so_du,
+                                   COALESCE(t.tien_gui_dau,t.han_muc) + COALESCE(SUM(b.bien_dong),0) theo_nhat_ky
+                            FROM tai_khoan t LEFT JOIN but_toan b ON b.so_tk=t.so_tk
+                            GROUP BY t.so_tk
+                          )
+                          SELECT *, so_du-theo_nhat_ky chenh_lech,
+                                 IF(so_du=theo_nhat_ky,'Khớp','Cần kiểm tra') ket_qua
+                          FROM doi_chieu ORDER BY ABS(so_du-theo_nhat_ky) DESC,so_tk"""))
+
+
 @app.get("/api/reports/<name>")
 def reports(name):
     if name == "salary":
