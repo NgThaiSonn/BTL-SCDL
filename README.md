@@ -2,12 +2,6 @@
 
 Bài tập lớn môn Cơ sở dữ liệu, chủ đề 3, Học viện Công nghệ Bưu chính Viễn thông. Ứng dụng web tiếng Việt dùng Flask, PyMySQL và MySQL 8.4. Bộ dữ liệu mẫu gồm 12 khách hàng, 5 nhân viên, 18 tài khoản và 7 giao dịch thuộc hai tháng liên tiếp.
 
-## Hồ sơ nộp
-
-- [Báo cáo PDF và sơ đồ EER](bao_cao/Bao-cao-chi-nhanh-ngan-hang.pdf). Sơ đồ ở trang 2, năm yêu cầu truy vấn ở trang 5.
-- [Tệp MySQL](chi_nhanh.sql) tạo CSDL, bảng, ràng buộc, thủ tục, dữ liệu mẫu và chạy cả năm yêu cầu. Đơn vị tiền là VND.
-- [Kho ứng dụng trên GitHub](https://github.com/NgThaiSonn/BTL-CSDL).
-
 ## Chạy bằng Docker Desktop
 
 Khởi động Docker Desktop. Mở terminal trong thư mục chứa `compose.yaml` rồi chạy lệnh dưới đây. Lần chạy đầu cần kết nối mạng để tải MySQL và thư viện Python.
@@ -28,7 +22,7 @@ Lệnh cuối dừng ứng dụng và giữ dữ liệu trong volume `bank_data`
 
 ## Chạy với MySQL đã cài trên máy
 
-1. Mở MySQL Workbench, kết nối bằng tài khoản có quyền tạo bảng, trigger, view và thủ tục. Mở `chi_nhanh.sql`, chạy **toàn bộ tệp** một lần trên môi trường mới. Tên CSDL được tạo là `ptit_chi_nhanh`. Tệp giữ nguyên dữ liệu cũ khi gặp đối tượng trùng tên. Nếu chỉ muốn xem lại báo cáo, chạy các lệnh ở mục «Chạy truy vấn» bên dưới.
+1. Mở MySQL Workbench, kết nối bằng tài khoản có quyền tạo bảng, trigger, view và thủ tục. Mở `docker/init.sql`, chạy **toàn bộ tệp** một lần trên môi trường mới. Tên CSDL được tạo là `ptit_chi_nhanh`. Nếu chỉ muốn xem lại báo cáo, chạy các lệnh ở mục «Chạy truy vấn» bên dưới.
 2. Tạo tài khoản cho app bằng các lệnh dưới đây, thay mật khẩu mẫu bằng mật khẩu của bạn. Ví dụ sau áp dụng khi cả app và MySQL chạy trên cùng máy.
 
 ```sql
@@ -92,7 +86,7 @@ CALL sp_giao_dich(@ma, 'TRA', 'G101', 'T202', 500000, 'NV03', NOW());
 
 ## Kiểm tra tự động
 
-`tests/kiem_tra.py` gọi các API thực tế trên MySQL. Để chạy lại, tạo một **bản thử nghiệm mới** bằng cách sao chép `chi_nhanh.sql`, thay toàn bộ tên CSDL `ptit_chi_nhanh` bằng `ptit_btl_test` rồi chạy bản sao trong Workbench. Cấp cho tài khoản chạy thử cùng các quyền ở bước cài đặt thủ công trên CSDL thử. Trong terminal đã cấu hình kết nối, chạy
+`tests/kiem_tra.py` gọi các API thực tế trên MySQL. Để chạy lại, tạo một **bản thử nghiệm mới** bằng cách sao chép `docker/init.sql`, thay toàn bộ tên CSDL `ptit_chi_nhanh` bằng `ptit_btl_test` rồi chạy bản sao trong Workbench. Cấp cho tài khoản chạy thử cùng các quyền ở bước cài đặt thủ công trên CSDL thử. Trong terminal đã cấu hình kết nối, chạy
 
 ```powershell
 $env:DB_NAME = 'ptit_btl_test'
@@ -101,14 +95,3 @@ Remove-Item Env:DB_NAME
 ```
 
 Bộ kiểm tra đối chiếu kết quả bốn báo cáo, trả nợ cùng chủ và khác chủ trong dữ liệu mẫu, trường hợp bằng/vượt hạn mức hoặc mức sàn, mở tài khoản và chi tiêu đồng thời, gửi lại mã thanh toán và chống trả thừa. Bộ kiểm tra ghi thêm hồ sơ vào CSDL thử.
-
-## Điền thông tin nhóm vào PDF
-
-PDF được tạo bằng ReportLab, có thể dựng lại từ nguồn có sẵn. Chạy lệnh sau trong môi trường Python của dự án và thay thông tin trong dấu ngoặc kép.
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install reportlab
-.\.venv\Scripts\python.exe bao_cao/tao_bao_cao.py --nhom "Nhóm và lớp" --thanh-vien "Họ tên – Mã SV"
-```
-
-Phần mô hình tham khảo [Bài giảng CSDL của PTIT](https://dlib.ptit.edu.vn/handle/HVCNBCVT/3387). Phần khóa dòng và kiểm tra ràng buộc dùng [MySQL 8.4 Reference Manual](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html).

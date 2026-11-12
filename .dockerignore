@@ -3,5 +3,7 @@
 __pycache__
 .env
 bao_cao
+Bai-nop
+chi_nhanh.sql
 tests
 *.zip

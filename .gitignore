@@ -2,3 +2,6 @@ __pycache__/
 *.py[cod]
 .env
 .venv/
+/Bai-nop/
+/bao_cao/
+/chi_nhanh.sql

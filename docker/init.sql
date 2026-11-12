@@ -1,5 +1,4 @@
--- BTL CSDL PTIT, chủ đề 3. Chạy nguyên tệp trên MySQL 8.4 với một CSDL mới.
--- Dữ liệu minh họa là giả lập. Không xóa hay thay thế CSDL đang có.
+-- Khởi tạo MySQL cho ứng dụng quản lý chi nhánh ngân hàng.
 CREATE DATABASE IF NOT EXISTS ptit_chi_nhanh CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE ptit_chi_nhanh;
 SET NAMES utf8mb4;
@@ -228,9 +227,3 @@ CALL sp_giao_dich('DEMO-05','TRA','G101','T201',1000000,'NV03',@nay);
 -- Yêu cầu 5: Nguyễn An (G101) thanh toán hộ Trần Bình (T202).
 CALL sp_giao_dich('DEMO-06','TRA','G101','T202',1500000,'NV04',@nay);
 CALL sp_giao_dich('DEMO-07','CHI',NULL,'T204',1200000,'NV03',@nay);
-
--- Bốn báo cáo bắt buộc. Có thể thay @nay hoặc hai ngày lọc.
-CALL sp_luong(@nay);
-CALL sp_tin_dung_trong_ky(@truoc,CURRENT_DATE);
-SELECT * FROM v_du_no ORDER BY du_no DESC,so_tk;
-SELECT * FROM v_tien_gui ORDER BY tong_gui DESC,ma_kh LIMIT 10;
