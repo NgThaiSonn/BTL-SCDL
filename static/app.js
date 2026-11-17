@@ -50,6 +50,7 @@ function modal(title,html){$("#dialog-title").textContent=title;$("#dialog-body"
 function bindForm(el,handler){
   el.onsubmit=async e=>{
     e.preventDefault();const btn=el.querySelector("[type=submit]"), error=el.querySelector(".form-error");
+    notify("");
     btn.disabled=true;error.textContent="";
     try{await handler(Object.fromEntries(new FormData(el)));}
     catch(err){error.innerHTML=`<p class="error">${esc(err.message)}</p>`;}

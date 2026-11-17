@@ -1,4 +1,4 @@
-# BTL SCDL
+# BTL CSDL
 
 Ứng dụng quản lý chi nhánh ngân hàng cho bài tập lớn môn Cơ sở dữ liệu PTIT (chủ đề 3). Ứng dụng dùng Flask và MySQL 8.4.
 
